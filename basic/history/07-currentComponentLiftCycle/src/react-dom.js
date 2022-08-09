@@ -111,8 +111,7 @@ function createElement(type,props,vdom){
  */
 function mountClassComponent(vdom){
   let { type, props,ref } = vdom
-  let newProps = type.defaultProps?{...props,...type.defaultProps}:props
-  let classInstance = new type(newProps)
+  let classInstance = new type(props)
   if (ref) ref.current = classInstance
   vdom.classInstance = classInstance;
   if (classInstance.componentWillMount){
@@ -122,7 +121,7 @@ function mountClassComponent(vdom){
   classInstance.oldRenderVdom = renderDom
   let dom =  createDOM(renderDom)
   if (dom && classInstance.componentDidMount){
-    dom.componentDidMount = classInstance.componentDidMount.bind(classInstance)
+    dom.componentDidMount = classInstance.componentDidMount
   }
   return dom
 }
