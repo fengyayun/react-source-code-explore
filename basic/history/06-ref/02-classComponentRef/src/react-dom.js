@@ -1,4 +1,4 @@
-import { REACT_TEXT, REACT_FORWARD_REF } from './ReactSymbol'
+import { REACT_TEXT } from './ReactSymbol'
 import { addEvent } from './event'
 function render(vdom,container){
   mount(vdom,container)
@@ -20,9 +20,7 @@ function mount(vdom,container){
  */
 function createDOM(vdom){
   let { type, props,ref } = vdom
-  if (type && type.$$typeof === REACT_FORWARD_REF){
-    return mountForwardComponent(vdom)
-  }
+
   let dom = createElement(type,props,vdom)
   if (props) {
     updateProps(dom,null,props)
@@ -42,16 +40,6 @@ function reconcileChildren(children, parentDOM) {
   children.forEach((child, index) => {
       mount(child, parentDOM);
   });
-}
-
-function mountForwardComponent(vdom){
-  //render=TextInput函数组件
-  //vdom = {type:ForwardedTextInput,props:{},ref:this.textInputRef}
-  //vdom = {type:{render},props:{},ref:this.textInputRef}
-  let { type, ref, props} = vdom
-  let renderDom = type.render(props,ref)
-  vdom.oldRenderVdom = renderDom
-  return createDOM(renderDom)
 }
 
 /**
