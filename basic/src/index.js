@@ -9,6 +9,10 @@ class ClassComponent extends React.Component{
       age:13
     }
   }
+  /**
+   * 1.react控制的事件中setState的执行是异步且批量的
+   * 2.不受react控制的事件执行是同步的且非批量的
+  */
   handleClick = (amount) =>{
     console.log('handleClick');
     updateQueue.isBatchingUpdate = true
