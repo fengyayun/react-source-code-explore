@@ -101,6 +101,9 @@ class Component {
     if (this.componentWillUpdate){
       this.componentWillUpdate()
     }
+    if (this.constructor.contextType){
+      this.context = this.constructor.contextType._currentValue
+    }
     let newRenderVdom = this.render()
     let snapshot = this.getSnapshotBeforeUpdate && this.getSnapshotBeforeUpdate(this.prevProps,this.prevState);
     //把差异更新到dom上

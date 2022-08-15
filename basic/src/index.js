@@ -1,85 +1,91 @@
 import React from './react';
-import ReactDOM from './react-dom'
-class Counter extends React.Component {
-  static getDerivedStateFromProps(nextProps,prevState){
-    console.log('getDerivedStateFromProps')
-    return undefined
-  }
-  static defaultProps = {
-    name:'yyfeng'
-  }
-  shouldComponentUpdate(nextProps,nextState){
-    console.log('shouldComponentUpdate',nextProps)
-    return true
-  }
-  constructor(props){
-    super(props)
-    this.state = {
-      number:0
-    }
-    console.log('1-constructor')
-  }
-  handleClick = () =>{
-    this.setState({number:this.state.number+1})
-  }
-  render(){
-    console.log('3-render');
-    return (<div>
-      <h1>num:{this.state.number}</h1>
-      <ChildCount count={this.state.number}></ChildCount>
-      <button onClick={this.handleClick}>+</button>
-    </div>)
-  }
-  getSnapshotBeforeUpdate(prevProps,prevState){
-    console.log('getSnapshotBeforeUpdate')
-    return null
-  }
-  componentDidMount(){
-    console.log('4-componentDidMount')
-  }
-  componentDidUpdate(){
-    console.log('6-componentDidUpdate')
+import ReactDOM from './react-dom';
+let ThemeContext = React.createContext()
+console.log('ThemeContext',ThemeContext)
+// $$typeof: Symbol(react.context)
+// Consumer: {$$typeof: Symbol(react.context), _context: {…}, …}
+// Provider: {$$typeof: Symbol(react.provider), _context: {…}}
+// _currentRenderer: null
+// _currentRenderer2: null
+// _currentValue: undefined
+// _currentValue2: undefined
+// _defaultValue: null
+// _globalName: null
+// _threadCount: 0
+const { Consumer, Provider } = ThemeContext
+const style = { padding:'10px',margin:'10px'}
+function Title(props){
+  console.log('Title');
+  return (<Consumer>
+    {(contentValue) =>(<div style={{ ...style,border:`5px solid ${contentValue.color}`}}>
+      Title
+    </div>)}
+  </Consumer>)
+
+}
+class Header extends React.Component {
+  static contextType = ThemeContext
+  render() {
+    console.log('Header');
+    return (
+      <div style={{ ...style, border: `5px solid ${this.context.color}` }}>
+        Header
+        <Title />
+      </div>
+    )
   }
 }
-class ChildCount extends React.Component {
-  static getDerivedStateFromProps(nextProps,prevState){
-    console.log('child-getDerivedStateFromProps')
-    const { count } = nextProps;
-    return { number: count * 2 };;
+class Main extends React.Component {
+  static contextType = ThemeContext
+  render(){
+    console.log('Main')
+    return (
+      <div style={{...style,border: `5px solid ${this.context.color}`}}>
+        Main
+        <Content></Content>
+      </div>
+    )
   }
+}
+function Content() {
+  console.log('Content')
+  return (
+    <Consumer>
+      {
+        (contentValue) =>(
+          <div style={{ ...style,border:`5px solid ${contentValue.color}`}}>
+            Content
+            <button style={{ color:'red'}} onClick={ () => contentValue.changeColor('red') }>红色</button>
+            <button style={{ color:'green'}} onClick={ () => contentValue.changeColor('green')}>变绿</button>
+          </div>
+        )
+      }
+    </Consumer>
+  )
+}
+class Page extends React.Component {
   constructor(props){
     super(props)
-    this.state = {
-      number:0
-    }
-    console.log('0-child-constructor')
+    this.state = { color: 'black'}
   }
-  shouldComponentUpdate(nextProps,nextState){
-    console.log('child-shouldComponentUpdate',nextProps)
-    return true
+  changeColor = (color) =>{
+    this.setState({color})
   }
   render(){
-    console.log('3-child-render');
-    return (<div>{this.state.number}</div>)
-  }
-  getSnapshotBeforeUpdate(prevProps,prevState){
-    console.log('child-getSnapshotBeforeUpdate',prevProps,prevState)
-    return null
-  }
-  componentDidMount(){
-    console.log('4-child-componentDidMount')
-  }
-  componentDidUpdate(){
-    console.log('6-child-componentDidUpdate')
-  }
-  componentWillUnmount() {
-    console.log(`7-child-componentWillUnmount`);
+    console.log('Page')
+    let contentValue = { color:this.state.color,changeColor:this.changeColor}
+    return (
+      <Provider value={contentValue}>
+        <div style={{ ...style,border:`5px solid ${this.state.color}`}}>
+          Page
+          <Header />
+          <Main />
+        </div>
+      </Provider>
+    )
   }
 }
 ReactDOM.render(
-  <Counter></Counter>,
+  <Page />,
   document.getElementById('root')
 );
-
-
-

@@ -1,4 +1,4 @@
-import { REACT_TEXT, REACT_FORWARD_REF } from './ReactSymbol'
+import { REACT_TEXT, REACT_FORWARD_REF, REACT_CONTEXT, REACT_PROVIDER } from './ReactSymbol'
 import { MOVE, PLACEMENT } from './ReactFlags'
 import { addEvent } from './event'
 function render(vdom,container){
@@ -24,7 +24,12 @@ function createDOM(vdom){
   let { type, props,ref } = vdom
   if (type && type.$$typeof === REACT_FORWARD_REF){
     return mountForwardComponent(vdom)
+  }else if(type && type.$$typeof === REACT_CONTEXT){
+    return mountContextComponent(vdom)
+  }else if(type && type.$$typeof === REACT_PROVIDER){
+    return mountProviderComponent(vdom)
   }
+
   let dom = createElement(type,props,vdom)
   if (props) {
     updateProps(dom,null,props)
@@ -47,6 +52,23 @@ function reconcileChildren(children, parentDOM) {
       mount(child, parentDOM);
   });
 }
+
+function mountContextComponent(vdom){
+  let { type,props } = vdom
+  let context = type._context
+  let renderDom = props.children[0](context._currentValue)
+  vdom.oldRenderVdom = renderDom
+  return createDOM(renderDom)
+}
+function mountProviderComponent(vdom){
+  let { type,props } = vdom
+  let context = type._context
+  context._currentValue = props.value
+  let renderDom = props.children[0]
+  vdom.oldRenderVdom = renderDom
+  return createDOM(renderDom)
+}
+
 
 function mountForwardComponent(vdom){
   //render=TextInput函数组件
@@ -116,6 +138,9 @@ function mountClassComponent(vdom){
   let { type, props,ref } = vdom
   let newProps = type.defaultProps?{...props,...type.defaultProps}:props
   let classInstance = new type(newProps)
+  if (type.contextType){
+    classInstance.context = type.contextType._currentValue
+  }
   if (type.getDerivedStateFromProps){
     type.getDerivedStateFromProps(props,classInstance.state || {})
   }
@@ -193,6 +218,12 @@ function updateElement(oldVdom,newVdom){
     if (oldVdom.props !== newVdom.props){
       currentDOM.textContent = newVdom.props
     }
+  }else if (type.$$typeof === REACT_CONTEXT){
+    //渲染CONTEXT组件
+    updateContextComponent(oldVdom,newVdom)
+  }else if (type.$$typeof === REACT_PROVIDER){
+    //渲染PROVIDER组件
+    updateProviderComponent(oldVdom,newVdom)
   }else if (typeof type === 'string'){
     //原生组件
     let currentDom = newVdom.dom = findDOM(oldVdom)
@@ -218,6 +249,40 @@ function updateFunctionComponent(oldVdom,newVdom){
   compareTwoVdom(parentDOM, oldVdom.oldRenderVdom, newRenderVdom);
   newVdom.oldRenderVdom = newRenderVdom;
 }
+
+/**
+ * 更新Context组件
+ * @param {*} oldVdom 
+ * @param {*} newVdom 
+ */
+function updateContextComponent(oldVdom,newVdom){
+  let currentDOM = findDOM(oldVdom);
+  if (!currentDOM) return;
+  let parentDOM = currentDOM.parentNode;
+  let { type, props } = newVdom
+  let childrenFunction = Array.isArray(props.children)?props.children[0]:props.children
+  let newRenderDom = childrenFunction(type._context._currentValue)
+  compareTwoVdom(parentDOM,oldVdom.oldRenderVdom,newRenderDom)
+  newVdom.oldRenderVdom = newRenderDom
+}
+
+/**
+ * 更新Provider组件
+ * @param {*} oldVdom 
+ * @param {*} newVdom 
+ */
+function updateProviderComponent(oldVdom,newVdom){
+  let currentDOM = findDOM(oldVdom);
+  if (!currentDOM) return;
+  let parentDOM = currentDOM.parentNode;
+  let { type, props } = newVdom
+  let context = type._context
+  context._currentValue = props.value
+  let newRenderDom = Array.isArray(props.children)?props.children[0]:props.children
+  compareTwoVdom(parentDOM,oldVdom.oldRenderVdom,newRenderDom)
+  newVdom.oldRenderVdom = newRenderDom
+}
+
 /**
  * 更新类组件 要复用老的类组件实例
  * @param {*} oldVdom 老的虚拟dom

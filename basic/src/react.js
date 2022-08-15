@@ -1,4 +1,4 @@
-import { REACT_ELEMENT, REACT_FORWARD_REF } from './ReactSymbol'
+import { REACT_ELEMENT, REACT_FORWARD_REF, REACT_CONTEXT, REACT_PROVIDER } from './ReactSymbol'
 import { wrapToVdom } from './util'
 import Component from './Component';
 /**
@@ -46,12 +46,25 @@ let Children = {
     return children.flat(mapFn)
   }
 }
+function createContext(){
+  let context = { $$typeof:REACT_CONTEXT, _currentValue:''}
+  context.Provider = {
+    $$typeof:REACT_PROVIDER,
+    _context:context
+  }
+  context.Consumer = {
+    $$typeof:REACT_CONTEXT,
+    _context:context
+  }
+  return context
+}
 
 const React = {
   createElement,
   Component,
   createRef,
   forwardRef,
-  Children
+  Children,
+  createContext
 }
 export default React
